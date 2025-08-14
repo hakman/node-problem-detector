@@ -142,9 +142,6 @@ For example, to run without auth, use the following config:
 
 ## Build Image
 
-* Install development dependencies for `libsystemd` and the ARM GCC toolchain
-  * Debian/Ubuntu: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
-
 * `git clone git@github.com:kubernetes/node-problem-detector.git`
 
 * Run `make` in the top directory. It will:
