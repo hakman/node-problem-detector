@@ -226,7 +226,7 @@ To develop NPD on Windows you'll need to setup your Windows machine for Go devel
 # Run these commands in the node-problem-detector directory.
 
 # Build in MINGW64 Window
-make clean ENABLE_JOURNALD=0 build-binaries
+make clean build-binaries
 
 # Test in MINGW64 Window
 make test
