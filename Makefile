@@ -63,15 +63,6 @@ TARBALL=$(NPD_NAME_VERSION).tar.gz
 # IMAGE is the image name of the node problem detector container image.
 IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 
-# ENABLE_JOURNALD enables build journald support or not. Building journald
-# support needs libsystemd-dev or libsystemd-journal-dev.
-ENABLE_JOURNALD?=1
-
-ifeq ($(shell go env GOHOSTOS), darwin)
-ENABLE_JOURNALD=0
-else ifeq ($(shell go env GOHOSTOS), windows)
-ENABLE_JOURNALD=0
-endif
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
@@ -97,21 +88,7 @@ else
 HOST_PLATFORM_BUILD_TAGS = $(LINUX_BUILD_TAGS)
 endif
 
-ifeq ($(ENABLE_JOURNALD), 1)
-	# Enable journald build tag.
-	LINUX_BUILD_TAGS := journald $(BUILD_TAGS)
-	# Enable cgo because sdjournal needs cgo to compile. The binary will be
-	# dynamically linked if CGO_ENABLED is enabled. This is fine because fedora
-	# already has necessary dynamic library. We can not use `-extldflags "-static"`
-	# here, because go-systemd uses dlopen, and dlopen will not work properly in a
-	# statically linked application.
-	CGO_ENABLED:=1
-	LOGCOUNTER=./bin/log-counter
-else
-	# Hack: Don't copy over log-counter, use a wildcard path that shouldn't match
-	# anything in COPY command.
-	LOGCOUNTER=*dont-include-log-counter
-endif
+LOGCOUNTER=./bin/log-counter
 
 GOLANGCI_LINT_VERSION := v2.2.0
 GOLANGCI_LINT := ./.bin/golangci-lint
@@ -138,10 +115,7 @@ version:
 	@echo $(VERSION)
 
 BINARIES = bin/node-problem-detector bin/health-checker test/bin/problem-maker
-BINARIES_LINUX_ONLY =
-ifeq ($(ENABLE_JOURNALD), 1)
-	BINARIES_LINUX_ONLY += bin/log-counter
-endif
+BINARIES_LINUX_ONLY = bin/log-counter
 
 ALL_BINARIES = $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), ./$(binary)) \
   $(foreach platform, $(LINUX_PLATFORMS), $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), output/$(platform)/$(binary))) \
@@ -199,15 +173,11 @@ output/linux_arm64/test/bin/%: $(PKG_SOURCES)
 
 # In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
-ifeq ($(ENABLE_JOURNALD), 1)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
-		-o bin/log-counter \
-		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		-tags "$(LINUX_BUILD_TAGS)" \
-		cmd/logcounter/log_counter.go
-else
-	echo "Warning: log-counter requires journald, skipping."
-endif
+CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
+-o bin/log-counter \
+-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+-tags "$(LINUX_BUILD_TAGS)" \
+cmd/logcounter/log_counter.go
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
