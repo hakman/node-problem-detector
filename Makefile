@@ -64,14 +64,6 @@ TARBALL=$(NPD_NAME_VERSION).tar.gz
 IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 
 
-# Disable cgo by default to make the binary statically linked.
-CGO_ENABLED:=0
-
-ifeq ($(GOARCH), arm64)
-	CC:=aarch64-linux-gnu-gcc
-else
-	CC:=x86_64-linux-gnu-gcc
-endif
 
 # Set default Go architecture to AMD64.
 GOARCH ?= amd64
@@ -123,7 +115,7 @@ ALL_BINARIES = $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), ./$(binary)
 ALL_TARBALLS = $(foreach platform, $(PLATFORMS), $(NPD_NAME_VERSION)-$(platform).tar.gz)
 
 output/windows_amd64/bin/%.exe: $(PKG_SOURCES)
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) go build \
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(WINDOWS_BUILD_TAGS)" \
@@ -131,15 +123,15 @@ output/windows_amd64/bin/%.exe: $(PKG_SOURCES)
 	touch $@
 
 output/windows_amd64/test/bin/%.exe: $(PKG_SOURCES)
-	cd test && \
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) go build \
+cd test && \
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build \
 		-o ../$@ \
 		-tags "$(WINDOWS_BUILD_TAGS)" \
 		./e2e/$(subst -,,$*)
 
 output/linux_amd64/bin/%: $(PKG_SOURCES)
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=x86_64-linux-gnu-gcc go build \
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
+  go build \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -147,16 +139,16 @@ output/linux_amd64/bin/%: $(PKG_SOURCES)
 	touch $@
 
 output/linux_amd64/test/bin/%: $(PKG_SOURCES)
-	cd test && \
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=x86_64-linux-gnu-gcc go build \
+cd test && \
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
+  go build \
 		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/$(subst -,,$*)
 
 output/linux_arm64/bin/%: $(PKG_SOURCES)
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=aarch64-linux-gnu-gcc go build \
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+  go build \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -164,37 +156,37 @@ output/linux_arm64/bin/%: $(PKG_SOURCES)
 	touch $@
 
 output/linux_arm64/test/bin/%: $(PKG_SOURCES)
-	cd test && \
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=aarch64-linux-gnu-gcc go build \
+cd test && \
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+  go build \
 		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/$(subst -,,$*)
 
 # In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
-CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
+CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build \
 -o bin/log-counter \
 -ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 -tags "$(LINUX_BUILD_TAGS)" \
 cmd/logcounter/log_counter.go
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
+CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build \
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./cmd/nodeproblemdetector
 
 ./test/bin/problem-maker: $(PKG_SOURCES)
-	cd test && \
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
+cd test && \
+CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build \
 		-o bin/problem-maker \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/problemmaker/problem_maker.go
 
 ./bin/health-checker: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
+CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build \
 		-o bin/health-checker \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
