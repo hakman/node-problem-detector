@@ -24,23 +24,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/go-systemd/v22/sdjournal"
 	"github.com/stretchr/testify/assert"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
-func TestTranslate(t *testing.T) {
+func TestTranslateJSON(t *testing.T) {
 	testCases := []struct {
-		entry *sdjournal.JournalEntry
+		entry map[string]any
 		log   *logtypes.Log
 	}{
 		{
 			// has log message
-			entry: &sdjournal.JournalEntry{
-				Fields:            map[string]string{"MESSAGE": "log message"},
-				RealtimeTimestamp: 123456789,
+			entry: map[string]any{
+				"MESSAGE":              "log message",
+				"__REALTIME_TIMESTAMP": "123456789",
 			},
 			log: &logtypes.Log{
 				Timestamp: time.Unix(0, 123456789*1000),
@@ -49,9 +48,8 @@ func TestTranslate(t *testing.T) {
 		},
 		{
 			// no log message
-			entry: &sdjournal.JournalEntry{
-				Fields:            map[string]string{},
-				RealtimeTimestamp: 987654321,
+			entry: map[string]any{
+				"__REALTIME_TIMESTAMP": "987654321",
 			},
 			log: &logtypes.Log{
 				Timestamp: time.Unix(0, 987654321*1000),
@@ -62,7 +60,7 @@ func TestTranslate(t *testing.T) {
 
 	for c, test := range testCases {
 		t.Logf("TestCase #%d: %#v", c+1, test)
-		assert.Equal(t, test.log, translate(test.entry))
+		assert.Equal(t, test.log, translateJSON(test.entry))
 	}
 }
 
